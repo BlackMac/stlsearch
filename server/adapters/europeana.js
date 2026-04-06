@@ -32,7 +32,10 @@ class EuropeanaAdapter extends BaseAdapter {
       });
 
       const url = `${this.baseUrl}/record/v2/search.json?${params}`;
+      console.log(`Europeana: fetching, key present: ${!!this.apiKey}, key length: ${this.apiKey.length}`);
       const data = this.curlJSON(url);
+      if (data.error) console.error(`Europeana: API error: ${JSON.stringify(data.error)}`);
+      else console.log(`Europeana: got ${data.totalResults} total, ${(data.items || []).length} items`);
 
       const items = data.items || [];
       const total = data.totalResults || 0;

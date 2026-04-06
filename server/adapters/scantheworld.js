@@ -37,9 +37,12 @@ class ScanTheWorldAdapter extends BaseAdapter {
       });
 
       const allItems = data.items || [];
+      if (data.error) console.error(`STW: API error: ${data.detail} - ${data.error_description}`);
+      else console.log(`STW: got ${allItems.length} items, filtering for designer ${STW_DESIGNER_ID}`);
       const stwItems = allItems.filter(
         item => item.designer && item.designer.id === STW_DESIGNER_ID
       );
+      console.log(`STW: ${stwItems.length} matches after filter`);
 
       const results = stwItems.slice(0, perPage).map(item => {
         const images = item.images || [];
