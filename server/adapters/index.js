@@ -184,7 +184,6 @@ function deduplicateResults(results) {
 
     for (let j = i + 1; j < results.length; j++) {
       if (usedIndices.has(j)) continue;
-      if (results[j].source === best.source) continue; // same source can't be a cross-source dup
 
       if (isSimilarTitle(best.title, results[j].title)) {
         usedIndices.add(j);
@@ -199,7 +198,13 @@ function deduplicateResults(results) {
     }
 
     if (alsoOn.length > 0) {
-      best.alsoOn = alsoOn;
+      // Deduplicate alsoOn by source (keep one per source, exclude best's own source)
+      const seen = new Set([best.source]);
+      best.alsoOn = alsoOn.filter(s => {
+        if (seen.has(s.source)) return false;
+        seen.add(s.source);
+        return true;
+      });
     }
     kept.push(best);
   }

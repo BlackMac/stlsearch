@@ -43,7 +43,7 @@ class ThingiverseAdapter extends BaseAdapter {
         id: item.id,
         title: item.name || item.title,
         description: (item.description || '').substring(0, 200),
-        thumbnail: item.thumbnail || item.preview_image || '',
+        thumbnail: this._upgradeImageUrl(item.preview_image || item.thumbnail || ''),
         author: item.creator ? item.creator.name : 'Unknown',
         authorUrl: item.creator ? item.creator.public_url : '',
         sourceUrl: item.public_url || `https://www.thingiverse.com/thing:${item.id}`,
@@ -64,6 +64,19 @@ class ThingiverseAdapter extends BaseAdapter {
       console.error(`Thingiverse search error: ${err.message}`);
       return { results: [], total: 0, hasMore: false };
     }
+  }
+  /**
+   * Upgrade Thingiverse thumbnail URLs to higher resolution.
+   * Available sizes: _thumb_medium (7KB), _thumb_large (11KB),
+   * _preview_card (11KB), _preview_featured (34KB), _display_large (48KB)
+   */
+  _upgradeImageUrl(url) {
+    if (!url) return '';
+    // Replace low-res suffixes with _preview_featured for good quality/speed balance
+    return url
+      .replace(/_thumb_medium\./, '_preview_featured.')
+      .replace(/_thumb_large\./, '_preview_featured.')
+      .replace(/_preview_card\./, '_preview_featured.');
   }
 }
 
