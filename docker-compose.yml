@@ -37,6 +37,12 @@ services:
       - HOST_WEBAPP_PORT=${WEBAPP_PORT:-3001}
       - HOST_ADMIN_PORT=${ADMIN_PORT:-3002}
       - HOST_POCKETBASE_PORT=${POCKETBASE_PORT:-8090}
+      # STL source API keys (optional)
+      - THINGIVERSE_APP_TOKEN=${THINGIVERSE_APP_TOKEN:-}
+      - CULTS3D_USERNAME=${CULTS3D_USERNAME:-}
+      - CULTS3D_API_KEY=${CULTS3D_API_KEY:-}
+      - MYMINIFACTORY_API_KEY=${MYMINIFACTORY_API_KEY:-}
+      - SKETCHFAB_API_TOKEN=${SKETCHFAB_API_TOKEN:-}
     restart: unless-stopped
     healthcheck:
       test: wget -q --spider http://localhost:3000/health && wget -q --spider http://localhost:8090/api/health || exit 1

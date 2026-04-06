@@ -43,8 +43,8 @@ FROM node:20-alpine
 
 ARG NODE_ENV=production
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install wget for health checks, curl for API requests
+RUN apk add --no-cache wget curl
 
 # Create app directories
 RUN mkdir -p /app/homepage /app/webapp /app/admin /app/server /pb/pb_data /pb/pb_hooks /pb/pb_migrations
@@ -55,9 +55,10 @@ COPY --from=pocketbase-downloader /tmp/pocketbase /pb/pocketbase
 # Copy Node.js dependencies
 COPY --from=node-builder /app/server/node_modules /app/server/node_modules
 
-# Copy server code
+# Copy server code (including adapters subdirectory)
 COPY server/*.js /app/server/
 COPY server/package.json /app/server/
+COPY server/adapters/ /app/server/adapters/
 
 # Copy static files
 COPY homepage/ /app/homepage/

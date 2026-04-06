@@ -1,0 +1,119 @@
+/* MeshHunt Theme System */
+
+:root {
+  /* Dark theme (default) */
+  --bg-primary: #09090b;
+  --bg-secondary: #111113;
+  --bg-surface: #18181b;
+  --bg-surface-hover: #1f1f23;
+  --bg-surface-active: #27272a;
+  --bg-elevated: #202024;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+  --text-inverse: #09090b;
+
+  --border-subtle: #27272a;
+  --border-default: #3f3f46;
+  --border-strong: #52525b;
+
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-muted: rgba(139, 92, 246, 0.15);
+  --accent-text: #c4b5fd;
+
+  --cyan: #06b6d4;
+  --cyan-muted: rgba(6, 182, 212, 0.15);
+
+  --success: #22c55e;
+  --success-muted: rgba(34, 197, 94, 0.15);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.15);
+  --error: #ef4444;
+  --error-muted: rgba(239, 68, 68, 0.15);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.6);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Skeleton animation */
+  --skeleton-base: #27272a;
+  --skeleton-shine: #3f3f46;
+}
+
+[data-theme="light"] {
+  --bg-primary: #fafafa;
+  --bg-secondary: #f4f4f5;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f4f4f5;
+  --bg-surface-active: #e4e4e7;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-tertiary: #71717a;
+  --text-muted: #a1a1aa;
+  --text-inverse: #fafafa;
+
+  --border-subtle: #e4e4e7;
+  --border-default: #d4d4d8;
+  --border-strong: #a1a1aa;
+
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-muted: rgba(124, 58, 237, 0.1);
+  --accent-text: #6d28d9;
+
+  --cyan: #0891b2;
+  --cyan-muted: rgba(8, 145, 178, 0.1);
+
+  --success: #16a34a;
+  --success-muted: rgba(22, 163, 74, 0.1);
+  --warning: #d97706;
+  --warning-muted: rgba(217, 119, 6, 0.1);
+  --error: #dc2626;
+  --error-muted: rgba(220, 38, 38, 0.1);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.16);
+
+  --skeleton-base: #e4e4e7;
+  --skeleton-shine: #f4f4f5;
+}
+
+/* Source badge colors */
+.source-thingiverse { --source-color: #248bfb; }
+.source-printables { --source-color: #fa6831; }
+.source-cults3d { --source-color: #e8435a; }
+.source-myminifactory { --source-color: #00b4d8; }
+.source-thangs { --source-color: #7c3aed; }
+.source-makerworld { --source-color: #00a86b; }
+.source-sketchfab { --source-color: #1caad9; }
+.source-threedscans { --source-color: #8b5cf6; }
+.source-grabcad { --source-color: #d32f2f; }
+.source-nih3d { --source-color: #2e7d32; }
+.source-youmagine { --source-color: #ff9800; }
+.source-free3d { --source-color: #9c27b0; }
+.source-turbosquid { --source-color: #e91e63; }
+.source-cgtrader { --source-color: #00bcd4; }
+.source-smithsonian { --source-color: #d4a843; }
