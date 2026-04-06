@@ -2,13 +2,15 @@ const { ThingiverseAdapter } = require('./thingiverse');
 const { PrintablesAdapter } = require('./printables');
 const { SketchfabAdapter } = require('./sketchfab');
 const { ThreeDScansAdapter } = require('./threedscans');
+const { SmithsonianAdapter } = require('./smithsonian');
+
 // Only include adapters with working APIs.
-// Smithsonian 3D (3d.si.edu) is behind Cloudflare JS challenge - not scrapable from server.
 const adapters = [
   new SketchfabAdapter(),
   new ThingiverseAdapter(),
   new PrintablesAdapter(),
   new ThreeDScansAdapter(),
+  new SmithsonianAdapter(),
 ];
 
 /**

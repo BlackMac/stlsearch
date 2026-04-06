@@ -1,7 +1,9 @@
+const path = require('path');
 const { BaseAdapter } = require('./base');
 
-let cheerio;
-try { cheerio = require('cheerio'); } catch {}
+// Static dataset of ~950 Smithsonian 3D models, scraped from 3d.si.edu.
+// Cloudflare JS challenge blocks live server-side requests, so we search locally.
+const models = require('./smithsonian-models.json');
 
 class SmithsonianAdapter extends BaseAdapter {
   constructor() {
@@ -14,70 +16,35 @@ class SmithsonianAdapter extends BaseAdapter {
   async search(query, options = {}) {
     const { page = 1, perPage = 20 } = options;
 
-    if (!cheerio) {
-      console.error('Smithsonian adapter requires cheerio');
-      return { results: [], total: 0, hasMore: false };
-    }
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const matched = models.filter(m => {
+      const title = m.title.toLowerCase();
+      return terms.every(t => title.includes(t));
+    });
 
-    try {
-      // 3d.si.edu uses Drupal + EDAN search; pages are 0-indexed, 25 results per page
-      const edanPage = page - 1;
-      const url = `${this.baseUrl}/edan/search/explore_3d_packages?edan_q=${encodeURIComponent(query)}&page=${edanPage}`;
+    const start = (page - 1) * perPage;
+    const paged = matched.slice(start, start + perPage);
 
-      const html = this.curlHTML(url);
-      console.log(`Smithsonian: got ${html.length} bytes, contains ${(html.match(/edan-search-result/g) || []).length} results`);
-      console.log(`Smithsonian: first 500 chars: ${html.substring(0, 500)}`);
-      const $ = cheerio.load(html);
+    const results = paged.map(m => this.normalizeResult({
+      id: m.id,
+      title: m.title,
+      description: 'Smithsonian 3D digitization — free museum scan',
+      thumbnail: m.thumbnail,
+      author: 'Smithsonian Institution',
+      authorUrl: 'https://3d.si.edu',
+      sourceUrl: m.url,
+      downloads: -1,
+      likes: -1,
+      license: 'CC0 / Public Domain',
+      isFree: true,
+      fileFormats: ['obj', 'glb', 'stl'],
+    }));
 
-      // Extract total count from "311 results" text
-      let total = 0;
-      const countText = $('body').text().match(/(\d+)\s+results/);
-      if (countText) total = parseInt(countText[1], 10);
-      console.log(`Smithsonian: total=${total}, li count=${$('li.edan-search-result').length}`);
-
-      const results = [];
-
-      $('li.edan-search-result').each((i, el) => {
-        if (results.length >= perPage) return false;
-
-        const $el = $(el);
-        const link = $el.find('a.inner');
-        const href = link.attr('href') || '';
-        const title = $el.find('.title').text().trim();
-        const img = $el.find('img');
-        const thumbnail = img.attr('src') || '';
-
-        // Extract UUID from href like /object/3d/slug:UUID
-        const uuidMatch = href.match(/:([a-f0-9-]{36})$/);
-        const uuid = uuidMatch ? uuidMatch[1] : href;
-
-        if (title) {
-          results.push(this.normalizeResult({
-            id: uuid,
-            title,
-            description: 'Smithsonian 3D digitization - free museum scan',
-            thumbnail,
-            author: 'Smithsonian Institution',
-            authorUrl: 'https://3d.si.edu',
-            sourceUrl: `https://3d.si.edu${href}`,
-            downloads: -1,
-            likes: -1,
-            license: 'CC0 / Public Domain',
-            isFree: true,
-            fileFormats: ['obj', 'glb', 'stl'],
-          }));
-        }
-      });
-
-      return {
-        results,
-        total,
-        hasMore: results.length >= perPage && (edanPage + 1) * 25 < total,
-      };
-    } catch (err) {
-      console.error(`Smithsonian search error: ${err.message}`);
-      return { results: [], total: 0, hasMore: false };
-    }
+    return {
+      results,
+      total: matched.length,
+      hasMore: start + perPage < matched.length,
+    };
   }
 }
 
