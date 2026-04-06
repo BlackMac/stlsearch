@@ -111,16 +111,19 @@
         perPage: 24,
         sort: sortSelect.value,
         freeOnly: !Store.getIncludePaid(),
-        sources: enabledSources.length < sources.length ? enabledSources : 'all',
+        sources: enabledSources,
       });
+
+      // Always client-side filter to ensure only enabled sources are shown
+      const filteredResults = (data.results || []).filter(r => enabledSources.includes(r.source));
 
       if (page === 1) {
         Store.recordSearch(query, data.sources);
-        allResults = data.results || [];
+        allResults = filteredResults;
         renderResults(allResults);
       } else {
-        allResults = allResults.concat(data.results || []);
-        appendResults(data.results || []);
+        allResults = allResults.concat(filteredResults);
+        appendResults(filteredResults);
       }
 
       if (allResults.length === 0 && page === 1) {
@@ -393,18 +396,11 @@
       Store.setEnabledSources(newEnabled);
       renderSourcePills();
       renderSourceSettings();
-      if (currentQuery) {
-        // Immediately filter displayed results for instant feedback
+      if (currentQuery && allResults.length > 0) {
+        // Client-side filter: immediately show/hide cards from toggled source
         const filtered = allResults.filter(r => newEnabled.includes(r.source));
         renderResults(filtered);
-        if (filtered.length === 0) {
-          emptyState.style.display = 'block';
-        } else {
-          emptyState.style.display = 'none';
-        }
-        // Then re-search from server with updated sources
-        isSearching = false;
-        performSearch(currentQuery);
+        emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
       }
     });
 

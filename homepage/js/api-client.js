@@ -13,8 +13,9 @@ const API = {
       sort: options.sort || 'relevant',
       free: String(options.freeOnly !== false),
     });
-    if (options.sources && options.sources !== 'all') {
-      params.set('sources', Array.isArray(options.sources) ? options.sources.join(',') : options.sources);
+    if (options.sources) {
+      const src = Array.isArray(options.sources) ? options.sources.join(',') : options.sources;
+      if (src && src !== 'all') params.set('sources', src);
     }
 
     const res = await fetch(`${this.baseUrl}/api/search?${params}`);
