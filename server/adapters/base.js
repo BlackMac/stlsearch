@@ -117,9 +117,14 @@ class BaseAdapter {
    */
   curlJSON(url, options = {}) {
     const { method = 'GET', headers = {}, body = null, timeout = 8 } = options;
-    const args = ['curl', '-s', '-S', '--max-time', String(timeout)];
+    // Always include a browser-like User-Agent
+    const allHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      ...headers,
+    };
+    const args = ['curl', '-s', '-S', '--max-time', String(timeout), '-L'];
     args.push('-X', method);
-    for (const [k, v] of Object.entries(headers)) {
+    for (const [k, v] of Object.entries(allHeaders)) {
       args.push('-H', `${k}: ${v}`);
     }
     if (body) {
@@ -133,6 +138,9 @@ class BaseAdapter {
       return a;
     }).join(' ');
     const result = execSync(cmd, { timeout: (timeout + 2) * 1000, encoding: 'utf8' });
+    if (!result || result.trim().startsWith('<!') || result.trim().startsWith('<html')) {
+      throw new Error(`${this.displayName}: received HTML instead of JSON (likely blocked by Cloudflare)`);
+    }
     return JSON.parse(result);
   }
 }
