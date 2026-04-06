@@ -12,6 +12,10 @@ const path = require('path');
 const os = require('os');
 const http = require('http');
 const fs = require('fs');
+const { Cache } = require('./cache');
+const { adapters, searchAll } = require('./adapters');
+
+const searchCache = new Cache();
 
 // =============================================================================
 // Configuration
@@ -445,6 +449,145 @@ function createHomepageApp() {
     app.use(express.json());
     app.use(ADMIN_PATH, createAdminRouter());
   }
+
+  // =========================================================================
+  // MeshHunt Search API
+  // =========================================================================
+
+  app.use(express.json());
+
+  // CORS for API routes
+  app.use('/api', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
+  // Search endpoint
+  app.get('/api/search', async (req, res) => {
+    const { q, page = '1', sources = 'all', free = 'true', sort = 'relevant', perPage = '20' } = req.query;
+    if (!q || !q.trim()) return res.status(400).json({ error: 'Query parameter "q" is required' });
+
+    const cacheKey = `${q}:${sources}:${page}:${sort}:${free}:${perPage}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached) return res.json({ ...cached, cached: true });
+
+    try {
+      const result = await searchAll(q.trim(), {
+        sources,
+        page: parseInt(page),
+        perPage: parseInt(perPage),
+        sort,
+        freeOnly: free !== 'false',
+      });
+      searchCache.set(cacheKey, result);
+      res.json(result);
+    } catch (err) {
+      originalConsole.error('Search error:', err);
+      res.status(500).json({ error: 'Search failed', message: err.message });
+    }
+  });
+
+  // Available sources
+  app.get('/api/sources', (req, res) => {
+    res.json({
+      sources: adapters.map(a => a.getInfo()),
+      total: adapters.length,
+      enabled: adapters.filter(a => a.isEnabled()).length,
+    });
+  });
+
+  // Image proxy for CORS-blocked thumbnails
+  app.get('/api/image-proxy', async (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'URL parameter required' });
+
+    try {
+      const decoded = decodeURIComponent(url);
+      // Only proxy image URLs from known domains
+      const allowed = ['thingiverse.com', 'printables.com', 'media.printables.com',
+        'cults3d.com', 'myminifactory.com', 'thangs.com', 'makerworld.com',
+        'sketchfab.com', 'grabcad.com', 'cdn.thingiverse.com', 'cdn.myminifactory.com'];
+      const hostname = new URL(decoded).hostname;
+      if (!allowed.some(d => hostname.includes(d))) {
+        return res.status(403).json({ error: 'Domain not allowed' });
+      }
+
+      const response = await fetch(decoded, {
+        headers: { 'User-Agent': 'MeshHunt/1.0' },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) return res.status(response.status).end();
+
+      const contentType = response.headers.get('content-type');
+      if (contentType) res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.send(buffer);
+    } catch (err) {
+      res.status(502).json({ error: 'Failed to proxy image' });
+    }
+  });
+
+  // Profile sync endpoints (slug-based)
+  app.post('/api/profiles', async (req, res) => {
+    const { slug, settings, favorites, stats } = req.body;
+    if (!slug) return res.status(400).json({ error: 'Slug is required' });
+
+    try {
+      // Try to find existing profile
+      const findRes = await fetch(`${API_URL}/api/collections/shared_profiles/records?filter=${encodeURIComponent(`slug="${slug}"`)}&perPage=1`);
+      const findData = await findRes.json();
+
+      if (findData.items && findData.items.length > 0) {
+        // Update existing
+        const id = findData.items[0].id;
+        const updateRes = await fetch(`${API_URL}/api/collections/shared_profiles/records/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ settings, favorites, stats }),
+        });
+        if (!updateRes.ok) throw new Error('Failed to update profile');
+        res.json({ slug, updated: true });
+      } else {
+        // Create new
+        const createRes = await fetch(`${API_URL}/api/collections/shared_profiles/records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, settings, favorites, stats }),
+        });
+        if (!createRes.ok) throw new Error('Failed to create profile');
+        res.json({ slug, created: true });
+      }
+    } catch (err) {
+      originalConsole.error('Profile sync error:', err);
+      res.status(500).json({ error: 'Failed to sync profile' });
+    }
+  });
+
+  app.get('/api/profiles/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const findRes = await fetch(`${API_URL}/api/collections/shared_profiles/records?filter=${encodeURIComponent(`slug="${slug}"`)}&perPage=1`);
+      const findData = await findRes.json();
+
+      if (!findData.items || findData.items.length === 0) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      const profile = findData.items[0];
+      res.json({ slug: profile.slug, settings: profile.settings, favorites: profile.favorites, stats: profile.stats });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to load profile' });
+    }
+  });
+
+  // =========================================================================
+  // Static files
+  // =========================================================================
 
   app.use(express.static(path.join(__dirname, '../homepage')));
   app.get('*', (req, res) => {

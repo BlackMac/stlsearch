@@ -1,365 +1,227 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Coding Boilerplate - Node.js + PocketBase + Claude Code</title>
-    <meta name="description" content="A boilerplate optimized for vibe coding with Claude Code. Node.js, PocketBase, and Docker in a single container. Just describe what you want to build.">
-    <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MeshHunt - STL Meta Search Engine</title>
+  <meta name="description" content="Search 10+ 3D model repositories at once. Free, no ads, no account needed.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="/" class="logo">
-                <span class="logo-icon">&lt;/&gt;</span>
-                <span>Boilerplate</span>
-            </a>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#architecture">Architecture</a>
-                <a href="#quickstart">Quick Start</a>
-                <a href="https://github.com" target="_blank" class="nav-icon" title="GitHub">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                </a>
-                <a href="http://localhost:3002" class="btn btn-secondary btn-sm">Admin</a>
-                <a href="http://localhost:3001" class="btn btn-primary btn-sm">Open App</a>
-            </div>
-        </nav>
+  <div class="app" id="app">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          MeshHunt
+        </a>
+
+        <div class="header-actions">
+          <button class="icon-btn desktop-only" id="btn-favorites" title="Favorites">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="badge" id="fav-badge" style="display:none"></span>
+          </button>
+          <button class="icon-btn desktop-only" id="btn-stats" title="Statistics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </button>
+          <button class="icon-btn desktop-only" id="btn-settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+        </div>
+      </div>
     </header>
 
-    <main>
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-badge">Vibe Coding Boilerplate</div>
-            <h1>Describe It. Build It.<br><span class="gradient-text">Ship It.</span></h1>
-            <p class="hero-subtitle">
-                A boilerplate optimized for vibe coding with Claude Code.
-                Pre-configured MCP servers, slash commands, and a clean architecture
-                that AI understands. Just describe what you want to build.
-            </p>
-            <div class="cta-buttons">
-                <a href="#quickstart" class="btn btn-primary btn-large">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    Get Started
-                </a>
-                <a href="https://github.com" target="_blank" class="btn btn-secondary btn-large">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    View on GitHub
-                </a>
-            </div>
-            <div class="hero-tech">
-                <span class="tech-badge">Claude Code</span>
-                <span class="tech-badge">Node.js</span>
-                <span class="tech-badge">PocketBase</span>
-                <span class="tech-badge">Docker</span>
-            </div>
-        </section>
+    <!-- Hero / Search -->
+    <section class="hero" id="hero">
+      <h1 class="hero-title">MeshHunt</h1>
+      <p class="hero-subtitle">Search millions of 3D models across 10+ repositories. Free, no ads, no account.</p>
+      <div class="search-container">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="search-input" id="search-input" placeholder="Search for 3D models..." autocomplete="off" autofocus>
+          <button class="search-clear" id="search-clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="search-meta">
+          <span>Press <span class="kbd">/</span> to focus</span>
+          <span>Searching <span class="source-count" id="source-count">6</span> sources</span>
+        </div>
+      </div>
+    </section>
 
-        <!-- Services Status -->
-        <section class="status-bar">
-            <div class="status-container">
-                <div class="status-item" id="status-homepage">
-                    <span class="status-dot"></span>
-                    <span class="status-name">Homepage</span>
-                    <span class="status-port">:3000</span>
-                </div>
-                <div class="status-item" id="status-webapp">
-                    <span class="status-dot"></span>
-                    <span class="status-name">Webapp</span>
-                    <span class="status-port">:3001</span>
-                </div>
-                <div class="status-item" id="status-admin">
-                    <span class="status-dot"></span>
-                    <span class="status-name">Admin</span>
-                    <span class="status-port">:3002</span>
-                </div>
-                <div class="status-item" id="status-pocketbase">
-                    <span class="status-dot"></span>
-                    <span class="status-name">PocketBase</span>
-                    <span class="status-port">:8090</span>
-                </div>
-            </div>
-        </section>
+    <!-- Filter Bar -->
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-inner" id="filter-inner">
+        <!-- Source pills injected by JS -->
+        <div class="filter-separator"></div>
+        <button class="filter-toggle" id="toggle-paid" title="Include paid models">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Paid
+        </button>
+        <select class="sort-select" id="sort-select">
+          <option value="relevant">Relevance</option>
+          <option value="newest">Newest</option>
+          <option value="downloads">Most Downloaded</option>
+          <option value="likes">Most Liked</option>
+        </select>
+      </div>
+    </div>
 
-        <!-- Features Section -->
-        <section id="features" class="features">
-            <div class="section-header">
-                <h2>Everything You Need</h2>
-                <p>A complete stack for building and deploying web applications</p>
-            </div>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                    </div>
-                    <h3>Three Frontends</h3>
-                    <p>Separate homepage, webapp, and admin dashboard. Each can be a different framework or plain HTML.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                    </div>
-                    <h3>PocketBase Backend</h3>
-                    <p>SQLite-based backend with auth, realtime subscriptions, file storage, and an admin UI built-in.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-                    </div>
-                    <h3>Single Container</h3>
-                    <p>Everything runs in one Docker container. No orchestration complexity, easy to deploy anywhere.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    </div>
-                    <h3>Admin Dashboard</h3>
-                    <p>Built-in monitoring with system metrics, request analytics, log streaming, and backup management.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                    </div>
-                    <h3>Deploy Anywhere</h3>
-                    <p>Standard Dockerfile works with any host: VPS, Coolify, Railway, Render, Fly.io, or your own server.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                    </div>
-                    <h3>Vibe Coding Ready</h3>
-                    <p>Pre-configured for Claude Code with MCP servers, slash commands, and CLAUDE.md context. Just describe what you want.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Architecture Section -->
-        <section id="architecture" class="architecture">
-            <div class="section-header">
-                <h2>Architecture</h2>
-                <p>A simple, scalable structure that grows with your project</p>
-            </div>
-            <div class="arch-grid">
-                <div class="arch-diagram">
-                    <div class="arch-container">
-                        <div class="arch-label">Docker Container</div>
-                        <div class="arch-services">
-                            <div class="arch-service homepage">
-                                <span class="service-name">Homepage</span>
-                                <span class="service-desc">Landing pages</span>
-                                <span class="service-port">:3000</span>
-                            </div>
-                            <div class="arch-service webapp">
-                                <span class="service-name">Webapp</span>
-                                <span class="service-desc">Main application</span>
-                                <span class="service-port">:3001</span>
-                            </div>
-                            <div class="arch-service admin">
-                                <span class="service-name">Admin</span>
-                                <span class="service-desc">Monitoring</span>
-                                <span class="service-port">:3002</span>
-                            </div>
-                            <div class="arch-service pocketbase">
-                                <span class="service-name">PocketBase</span>
-                                <span class="service-desc">API + Database</span>
-                                <span class="service-port">:8090</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="arch-details">
-                    <div class="arch-detail">
-                        <h4>Homepage Server</h4>
-                        <p>Static marketing pages, landing pages, or documentation. Replace with any static site generator.</p>
-                    </div>
-                    <div class="arch-detail">
-                        <h4>Webapp Server</h4>
-                        <p>Your main application. Can be vanilla JS, React, Vue, Svelte, or any frontend framework.</p>
-                    </div>
-                    <div class="arch-detail">
-                        <h4>Admin Dashboard</h4>
-                        <p>System monitoring with live logs, request analytics, backup controls, and environment info.</p>
-                    </div>
-                    <div class="arch-detail">
-                        <h4>PocketBase</h4>
-                        <p>Backend-as-a-service with REST API, realtime, auth, file storage, and admin UI at <code>/_/</code></p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Quick Start Section -->
-        <section id="quickstart" class="quickstart">
-            <div class="section-header">
-                <h2>Quick Start</h2>
-                <p>From zero to working app in minutes</p>
-            </div>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Run the installer</h4>
-                        <div class="code-block">
-                            <code>curl -fsSL https://raw.githubusercontent.com/YUZU-Hub/project-boilerplate/main/install.sh | sh -s my-project</code>
-                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Describe what you want to build</h4>
-                        <div class="code-block">
-                            <code>claude "Build a todo list with user auth and sharing"</code>
-                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Your app is ready</h4>
-                        <div class="step-links">
-                            <a href="http://localhost:3000" target="_blank">localhost:3000</a> - Homepage
-                            <a href="http://localhost:3001" target="_blank">localhost:3001</a> - Webapp
-                            <a href="http://localhost:3002" target="_blank">localhost:3002</a> - Admin
-                            <a href="http://localhost:8090/_/" target="_blank">localhost:8090/_/</a> - PocketBase Admin
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- File Structure Section -->
-        <section class="structure">
-            <div class="section-header">
-                <h2>Project Structure</h2>
-                <p>Clean organization for any size project</p>
-            </div>
-            <div class="structure-grid">
-                <div class="file-tree">
-<pre>
-project/
-├── homepage/          <span class="comment"># Landing pages (port 3000)</span>
-│   ├── css/
-│   ├── js/
-│   └── index.html
-├── webapp/            <span class="comment"># Main application (port 3001)</span>
-│   ├── css/
-│   ├── js/
-│   └── index.html
-├── admin/             <span class="comment"># Admin dashboard (port 3002)</span>
-│   ├── css/
-│   ├── js/
-│   └── index.html
-├── server/            <span class="comment"># Node.js Express server</span>
-│   └── index.js       <span class="comment"># Single unified server</span>
-├── api/               <span class="comment"># PocketBase (port 8090)</span>
-│   ├── pb_hooks/      <span class="comment"># Custom hooks</span>
-│   └── pb_migrations/ <span class="comment"># Schema migrations</span>
-├── .claude/           <span class="comment"># Claude Code config</span>
-├── Dockerfile         <span class="comment"># Unified container</span>
-├── docker-compose.yml <span class="comment"># Local development</span>
-└── CLAUDE.md          <span class="comment"># AI instructions</span>
-</pre>
-                </div>
-                <div class="structure-notes">
-                    <div class="note">
-                        <h4>Customize Each Frontend</h4>
-                        <p>Each directory (homepage, webapp, admin) is independent. Replace with React, Vue, Svelte, or keep it vanilla.</p>
-                    </div>
-                    <div class="note">
-                        <h4>PocketBase Hooks</h4>
-                        <p>Add custom API routes, cron jobs, and event handlers in <code>api/pb_hooks/</code>. Changes hot-reload in development.</p>
-                    </div>
-                    <div class="note">
-                        <h4>Environment Modes</h4>
-                        <p>Development uses volume mounts for hot-reload. Production builds everything into a single optimized image.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Deployment Section -->
-        <section class="deployment">
-            <div class="section-header">
-                <h2>Deploy Anywhere</h2>
-                <p>One Dockerfile, endless deployment options</p>
-            </div>
-            <div class="deploy-options">
-                <div class="deploy-card">
-                    <div class="deploy-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                    </div>
-                    <h3>Any Docker Host</h3>
-                    <p>VPS, dedicated server, or local machine - if it runs Docker, it runs this.</p>
-                    <div class="code-block small">
-                        <code>docker build -t myapp . && docker run -p 3000:3000 -p 3001:3001 -p 3002:3002 -p 8090:8090 myapp</code>
-                    </div>
-                </div>
-                <div class="deploy-card">
-                    <div class="deploy-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    </div>
-                    <h3>PaaS Platforms</h3>
-                    <p>Coolify, Railway, Render, Fly.io - any platform that supports Dockerfile deployments.</p>
-                    <ol>
-                        <li>Connect your GitHub repo</li>
-                        <li>Point to the root <code>Dockerfile</code></li>
-                        <li>Configure domains for each port</li>
-                        <li>Push to deploy</li>
-                    </ol>
-                </div>
-            </div>
-        </section>
-
-        <!-- Links Section -->
-        <section class="links">
-            <div class="link-cards">
-                <a href="http://localhost:8090/_/" target="_blank" class="link-card">
-                    <div class="link-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                    </div>
-                    <div class="link-content">
-                        <h4>PocketBase Admin</h4>
-                        <p>Manage collections, users, and data</p>
-                    </div>
-                    <svg class="link-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-                <a href="http://localhost:3002" target="_blank" class="link-card">
-                    <div class="link-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    </div>
-                    <div class="link-content">
-                        <h4>Admin Dashboard</h4>
-                        <p>Monitor system health and logs</p>
-                    </div>
-                    <svg class="link-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-                <a href="https://pocketbase.io/docs" target="_blank" class="link-card">
-                    <div class="link-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                    </div>
-                    <div class="link-content">
-                        <h4>PocketBase Docs</h4>
-                        <p>API reference and guides</p>
-                    </div>
-                    <svg class="link-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-            </div>
-        </section>
+    <!-- Results Area -->
+    <main class="results-area" id="results-area">
+      <div class="results-grid" id="results-grid">
+        <!-- Cards injected by JS -->
+      </div>
+      <div class="loading-more" id="loading-more" style="display:none">
+        <div class="spinner"></div>
+      </div>
+      <div class="state-message" id="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>No models found</h3>
+        <p>Try a different search term or enable more sources</p>
+      </div>
+      <div class="state-message" id="welcome-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <h3>Search for 3D models</h3>
+        <p>Type a query above to search across Thingiverse, Printables, Cults3D, and more</p>
+      </div>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-brand">
-                <span class="logo-icon">&lt;/&gt;</span>
-                <span>Project Boilerplate</span>
-            </div>
-            <p>Open source. MIT License. Build something great.</p>
-        </div>
-    </footer>
+    <!-- Drawers -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
 
-    <script src="/js/main.js"></script>
+    <!-- Settings Drawer -->
+    <div class="drawer" id="settings-drawer">
+      <div class="drawer-header">
+        <h2 class="drawer-title">Settings</h2>
+        <button class="drawer-close" data-close-drawer>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <!-- Appearance -->
+        <div class="settings-section">
+          <div class="settings-section-title">Appearance</div>
+          <div class="settings-row">
+            <div class="settings-label">Theme</div>
+            <div class="theme-options" id="theme-options">
+              <button class="theme-option" data-theme="dark">Dark</button>
+              <button class="theme-option active" data-theme="light">Light</button>
+              <button class="theme-option" data-theme="system">System</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sources -->
+        <div class="settings-section">
+          <div class="settings-section-title">Sources</div>
+          <ul class="source-toggle-list" id="source-toggle-list">
+            <!-- Injected by JS -->
+          </ul>
+        </div>
+
+        <!-- Sync -->
+        <div class="settings-section">
+          <div class="settings-section-title">Sync Across Devices</div>
+          <p class="settings-desc" style="margin-bottom:8px">Share your settings and favorites with another device using a sync code.</p>
+          <button class="btn btn-primary btn-sm" id="btn-generate-slug">Generate Sync Code</button>
+          <div class="sync-slug-display" id="sync-slug-display" style="display:none">
+            <span class="slug-text" id="slug-text"></span>
+            <button class="slug-copy-btn" id="slug-copy" title="Copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+          <div class="sync-input-group">
+            <input type="text" class="sync-input" id="sync-input" placeholder="Enter sync code...">
+            <button class="btn btn-sm" id="btn-restore-slug">Restore</button>
+          </div>
+        </div>
+
+        <!-- Data -->
+        <div class="settings-section">
+          <div class="settings-section-title">Data</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="btn-export">Export Settings</button>
+            <label class="btn btn-sm" style="cursor:pointer">
+              Import
+              <input type="file" accept=".json" id="btn-import" style="display:none">
+            </label>
+            <button class="btn btn-sm btn-danger" id="btn-clear-data">Clear All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favorites Drawer -->
+    <div class="drawer" id="favorites-drawer">
+      <div class="drawer-header">
+        <h2 class="drawer-title">Favorites</h2>
+        <button class="drawer-close" data-close-drawer>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="favorites-grid" id="favorites-grid">
+          <!-- Injected by JS -->
+        </div>
+        <div class="state-message" id="favorites-empty" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <h3>No favorites yet</h3>
+          <p>Click the heart icon on any model to save it here</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Drawer -->
+    <div class="drawer" id="stats-drawer">
+      <div class="drawer-header">
+        <h2 class="drawer-title">Statistics</h2>
+        <button class="drawer-close" data-close-drawer>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body" id="stats-body">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- Bottom Nav (Mobile) -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <button class="bottom-nav-btn active" data-nav="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search
+        </button>
+        <button class="bottom-nav-btn" data-nav="favorites">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Favorites
+        </button>
+        <button class="bottom-nav-btn" data-nav="stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Stats
+        </button>
+        <button class="bottom-nav-btn" data-nav="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          Settings
+        </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api-client.js"></script>
+  <script src="/js/components.js"></script>
+  <script src="/js/main.js"></script>
 </body>
 </html>

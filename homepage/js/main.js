@@ -1,181 +1,547 @@
 /**
- * Homepage JavaScript
- * Handles service status checks, copy functionality, and interactions
+ * MeshHunt - Main App Controller
  */
 
-// Service configuration
-const SERVICES = {
-    homepage: { url: 'http://localhost:3000', healthPath: '/health' },
-    webapp: { url: 'http://localhost:3001', healthPath: '/health' },
-    admin: { url: 'http://localhost:3002', healthPath: '/health' },
-    pocketbase: { url: 'http://localhost:8090', healthPath: '/api/health' }
-};
+(function () {
+  'use strict';
 
-/**
- * Check health of a single service
- */
-async function checkServiceHealth(serviceId, config) {
-    const statusEl = document.getElementById(`status-${serviceId}`);
-    if (!statusEl) return;
+  // State
+  let sources = [];
+  let currentQuery = '';
+  let currentPage = 1;
+  let isSearching = false;
+  let hasSearched = false;
+  let allResults = [];
 
-    const dotEl = statusEl.querySelector('.status-dot');
+  // DOM refs
+  const $ = id => document.getElementById(id);
+  const searchInput = $('search-input');
+  const searchClear = $('search-clear');
+  const resultsGrid = $('results-grid');
+  const filterBar = $('filter-bar');
+  const filterInner = $('filter-inner');
+  const loadingMore = $('loading-more');
+  const emptyState = $('empty-state');
+  const welcomeState = $('welcome-state');
+  const hero = $('hero');
+  const sortSelect = $('sort-select');
+  const sourceCount = $('source-count');
+  const togglePaid = $('toggle-paid');
+  const drawerOverlay = $('drawer-overlay');
+
+  // ================================================================
+  // Init
+  // ================================================================
+
+  async function init() {
+    applyTheme(Store.getTheme());
+    sortSelect.value = Store.getDefaultSort();
+    if (Store.getIncludePaid()) togglePaid.classList.add('on');
+
+    loadSources();
+    bindEvents();
+    updateFavBadge();
+  }
+
+  async function loadSources() {
+    try {
+      const data = await API.getSources();
+      sources = data.sources || [];
+      sourceCount.textContent = sources.filter(s => s.enabled).length;
+      renderSourcePills();
+      renderSourceSettings();
+    } catch {
+      sources = [];
+    }
+  }
+
+  // ================================================================
+  // Theme
+  // ================================================================
+
+  function applyTheme(theme) {
+    Store.setTheme(theme);
+    if (theme === 'system') {
+      const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', preferred);
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    // Update theme buttons
+    document.querySelectorAll('#theme-options .theme-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+  }
+
+  // ================================================================
+  // Search
+  // ================================================================
+
+  const doSearch = Utils.debounce(async function (query) {
+    if (!query.trim()) {
+      clearResults();
+      return;
+    }
+    await performSearch(query.trim());
+  }, 300);
+
+  async function performSearch(query, page = 1) {
+    if (isSearching && page === 1) return;
+    isSearching = true;
+    currentQuery = query;
+    currentPage = page;
+
+    // Record in history & stats
+    if (page === 1) {
+      Store.addSearchHistory(query);
+      hero.classList.add('compact');
+      filterBar.classList.add('visible');
+      welcomeState.style.display = 'none';
+      emptyState.style.display = 'none';
+      resultsGrid.innerHTML = Components.skeletonCards(12);
+      allResults = [];
+    } else {
+      loadingMore.style.display = 'block';
+    }
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const enabledSources = getEnabledSourceNames();
+      const data = await API.search(query, {
+        page,
+        perPage: 24,
+        sort: sortSelect.value,
+        freeOnly: !Store.getIncludePaid(),
+        sources: enabledSources.length < sources.length ? enabledSources : 'all',
+      });
 
-        const response = await fetch(`${config.url}${config.healthPath}`, {
-            method: 'GET',
-            mode: 'cors',
-            signal: controller.signal
-        });
+      if (page === 1) {
+        Store.recordSearch(query, data.sources);
+        allResults = data.results || [];
+        renderResults(allResults);
+      } else {
+        allResults = allResults.concat(data.results || []);
+        appendResults(data.results || []);
+      }
 
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            statusEl.classList.add('online');
-            statusEl.classList.remove('offline');
-            dotEl.title = 'Online';
-        } else {
-            throw new Error(`HTTP ${response.status}`);
-        }
-    } catch (error) {
-        statusEl.classList.add('offline');
-        statusEl.classList.remove('online');
-        dotEl.title = 'Offline';
+      if (allResults.length === 0 && page === 1) {
+        emptyState.style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      if (page === 1) {
+        resultsGrid.innerHTML = '';
+        emptyState.style.display = 'block';
+      }
+    } finally {
+      isSearching = false;
+      loadingMore.style.display = 'none';
     }
-}
+  }
 
-/**
- * Check all services health
- */
-async function checkAllServices() {
-    const checks = Object.entries(SERVICES).map(([id, config]) =>
-        checkServiceHealth(id, config)
-    );
-    await Promise.all(checks);
-}
+  function clearResults() {
+    currentQuery = '';
+    allResults = [];
+    hasSearched = false;
+    hero.classList.remove('compact');
+    filterBar.classList.remove('visible');
+    resultsGrid.innerHTML = '';
+    emptyState.style.display = 'none';
+    welcomeState.style.display = 'block';
+  }
 
-/**
- * Copy code to clipboard
- */
-function copyCode(button) {
-    const codeBlock = button.closest('.code-block');
-    const codeEl = codeBlock.querySelector('code');
-    const text = codeEl.textContent;
+  function renderResults(results) {
+    resultsGrid.innerHTML = results.map(r => Components.resultCard(r)).join('');
+  }
 
-    navigator.clipboard.writeText(text).then(() => {
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        button.classList.add('copied');
+  function appendResults(results) {
+    resultsGrid.insertAdjacentHTML('beforeend', results.map(r => Components.resultCard(r)).join(''));
+  }
 
-        setTimeout(() => {
-            button.textContent = originalText;
-            button.classList.remove('copied');
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-        button.textContent = 'Failed';
-        setTimeout(() => {
-            button.textContent = 'Copy';
-        }, 2000);
+  function getEnabledSourceNames() {
+    const stored = Store.getEnabledSources();
+    if (!stored) return sources.filter(s => s.enabled).map(s => s.name);
+    return stored;
+  }
+
+  // ================================================================
+  // Source Pills (Filter Bar)
+  // ================================================================
+
+  function renderSourcePills() {
+    const enabled = getEnabledSourceNames();
+    const separator = filterInner.querySelector('.filter-separator');
+    // Remove old pills
+    filterInner.querySelectorAll('.filter-pill').forEach(el => el.remove());
+    // Add new pills before separator
+    sources.forEach(src => {
+      const isActive = enabled.includes(src.name);
+      const pill = document.createElement('div');
+      pill.innerHTML = Components.sourcePill(src, isActive);
+      separator.before(pill.firstElementChild);
     });
-}
+  }
 
-/**
- * Smooth scroll for anchor links
- */
-function initSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            const href = this.getAttribute('href');
-            if (href === '#') return;
+  function renderSourceSettings() {
+    const list = $('source-toggle-list');
+    const enabled = getEnabledSourceNames();
+    list.innerHTML = sources.map(src =>
+      Components.sourceToggleItem(src, enabled.includes(src.name))
+    ).join('');
+  }
 
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-                const headerOffset = 80;
-                const elementPosition = target.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  // ================================================================
+  // Drawers
+  // ================================================================
 
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
-            }
+  function openDrawer(id) {
+    document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+    $(id).classList.add('open');
+    drawerOverlay.classList.add('open');
+  }
+
+  function closeDrawers() {
+    document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+    drawerOverlay.classList.remove('open');
+  }
+
+  // ================================================================
+  // Favorites
+  // ================================================================
+
+  function toggleFavorite(modelId) {
+    const model = allResults.find(r => r.id === modelId);
+    if (!model) return;
+
+    if (Store.isFavorite(modelId)) {
+      Store.removeFavorite(modelId);
+    } else {
+      Store.addFavorite(model);
+    }
+
+    // Update card button
+    const btn = document.querySelector(`[data-fav-id="${CSS.escape(modelId)}"]`);
+    if (btn) {
+      const isFav = Store.isFavorite(modelId);
+      btn.classList.toggle('favorited', isFav);
+      btn.innerHTML = isFav ? Components.icons.heartFilled : Components.icons.heart;
+    }
+
+    updateFavBadge();
+    renderFavorites();
+  }
+
+  function renderFavorites() {
+    const favs = Store.getFavorites();
+    const grid = $('favorites-grid');
+    const empty = $('favorites-empty');
+
+    if (favs.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = favs.map(f => Components.favoriteCard(f)).join('');
+    }
+  }
+
+  function updateFavBadge() {
+    const badge = $('fav-badge');
+    const count = Store.getFavorites().length;
+    badge.style.display = count > 0 ? 'block' : 'none';
+  }
+
+  // ================================================================
+  // Stats
+  // ================================================================
+
+  function renderStats() {
+    $('stats-body').innerHTML = Components.statsPanel(Store.getStats());
+  }
+
+  // ================================================================
+  // Sync
+  // ================================================================
+
+  async function generateSlug() {
+    const slug = Utils.generateSlug();
+    Store.setSyncSlug(slug);
+    $('slug-text').textContent = slug;
+    $('sync-slug-display').style.display = 'flex';
+
+    try {
+      await API.saveProfile(slug, {
+        settings: {
+          theme: Store.getTheme(),
+          enabledSources: Store.getEnabledSources(),
+          includePaid: Store.getIncludePaid(),
+          defaultSort: Store.getDefaultSort(),
+        },
+        favorites: Store.getFavorites(),
+        stats: Store.getStats(),
+      });
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+    }
+  }
+
+  async function restoreSlug() {
+    const slug = $('sync-input').value.trim().toLowerCase();
+    if (!slug) return;
+
+    try {
+      const profile = await API.loadProfile(slug);
+      if (!profile) {
+        alert('Sync code not found. Check the code and try again.');
+        return;
+      }
+
+      if (profile.settings) {
+        Store.importAll({
+          ...profile.settings,
+          favorites: profile.favorites || [],
+          stats: profile.stats || Store.getStats(),
         });
+      }
+
+      Store.setSyncSlug(slug);
+      $('slug-text').textContent = slug;
+      $('sync-slug-display').style.display = 'flex';
+      $('sync-input').value = '';
+
+      // Apply restored settings
+      applyTheme(Store.getTheme());
+      sortSelect.value = Store.getDefaultSort();
+      if (Store.getIncludePaid()) togglePaid.classList.add('on');
+      else togglePaid.classList.remove('on');
+      renderSourcePills();
+      renderSourceSettings();
+      renderFavorites();
+      updateFavBadge();
+
+      alert('Settings restored successfully!');
+    } catch (err) {
+      console.error('Failed to restore:', err);
+      alert('Failed to restore. Please try again.');
+    }
+  }
+
+  // ================================================================
+  // Events
+  // ================================================================
+
+  function bindEvents() {
+    // Search
+    searchInput.addEventListener('input', () => {
+      searchClear.classList.toggle('visible', searchInput.value.length > 0);
+      doSearch(searchInput.value);
     });
-}
 
-/**
- * Header scroll effect
- */
-function initHeaderScroll() {
-    const header = document.querySelector('header');
-    if (!header) return;
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doSearch.cancel && doSearch.cancel();
+        if (searchInput.value.trim()) performSearch(searchInput.value.trim());
+      }
+    });
 
-    let lastScroll = 0;
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      searchInput.focus();
+      clearResults();
+    });
 
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
+    // Keyboard shortcut: / to focus search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput && !document.activeElement.closest('.drawer')) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+      if (e.key === 'Escape') {
+        closeDrawers();
+      }
+    });
 
-        if (currentScroll > 50) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
+    // Sort
+    sortSelect.addEventListener('change', () => {
+      Store.setDefaultSort(sortSelect.value);
+      if (currentQuery) performSearch(currentQuery);
+    });
+
+    // Toggle paid
+    togglePaid.addEventListener('click', () => {
+      togglePaid.classList.toggle('on');
+      Store.setIncludePaid(togglePaid.classList.contains('on'));
+      if (currentQuery) performSearch(currentQuery);
+    });
+
+    // Source pills click
+    filterInner.addEventListener('click', (e) => {
+      const pill = e.target.closest('.filter-pill');
+      if (!pill) return;
+      const name = pill.dataset.source;
+      const enabled = getEnabledSourceNames();
+      const isActive = enabled.includes(name);
+
+      let newEnabled;
+      if (isActive) {
+        newEnabled = enabled.filter(s => s !== name);
+      } else {
+        newEnabled = [...enabled, name];
+      }
+
+      Store.setEnabledSources(newEnabled);
+      renderSourcePills();
+      renderSourceSettings();
+      if (currentQuery) performSearch(currentQuery);
+    });
+
+    // Header buttons
+    $('btn-favorites').addEventListener('click', () => { renderFavorites(); openDrawer('favorites-drawer'); });
+    $('btn-stats').addEventListener('click', () => { renderStats(); openDrawer('stats-drawer'); });
+    $('btn-settings').addEventListener('click', () => openDrawer('settings-drawer'));
+
+    // Drawer close
+    drawerOverlay.addEventListener('click', closeDrawers);
+    document.querySelectorAll('[data-close-drawer]').forEach(btn => {
+      btn.addEventListener('click', closeDrawers);
+    });
+
+    // Bottom nav (mobile)
+    document.querySelectorAll('[data-nav]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const target = btn.dataset.nav;
+        if (target === 'search') {
+          closeDrawers();
+          searchInput.focus();
+        } else if (target === 'favorites') {
+          renderFavorites();
+          openDrawer('favorites-drawer');
+        } else if (target === 'stats') {
+          renderStats();
+          openDrawer('stats-drawer');
+        } else if (target === 'settings') {
+          openDrawer('settings-drawer');
         }
+      });
+    });
 
-        lastScroll = currentScroll;
-    }, { passive: true });
-}
+    // Theme options
+    document.querySelectorAll('#theme-options .theme-option').forEach(btn => {
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+    });
 
-/**
- * Animate elements on scroll
- */
-function initScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+    // Source toggles in settings
+    $('source-toggle-list').addEventListener('change', (e) => {
+      const toggle = e.target.closest('[data-source-toggle]');
+      if (!toggle) return;
+      const name = toggle.dataset.sourceToggle;
+      const enabled = getEnabledSourceNames();
+      let newEnabled;
+      if (toggle.checked) {
+        newEnabled = [...enabled, name];
+      } else {
+        newEnabled = enabled.filter(s => s !== name);
+      }
+      Store.setEnabledSources(newEnabled);
+      renderSourcePills();
+      sourceCount.textContent = newEnabled.length;
+    });
 
+    // Sync
+    $('btn-generate-slug').addEventListener('click', generateSlug);
+    $('btn-restore-slug').addEventListener('click', restoreSlug);
+    $('slug-copy').addEventListener('click', () => {
+      Utils.copyToClipboard($('slug-text').textContent);
+    });
+
+    // Export/Import/Clear
+    $('btn-export').addEventListener('click', () => {
+      Utils.downloadJSON(Store.exportAll(), 'meshhunt-settings.json');
+    });
+
+    $('btn-import').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = await Utils.readJSONFile(file);
+        Store.importAll(data);
+        applyTheme(Store.getTheme());
+        renderSourcePills();
+        renderSourceSettings();
+        updateFavBadge();
+        alert('Settings imported successfully!');
+      } catch (err) {
+        alert('Failed to import: ' + err.message);
+      }
+      e.target.value = '';
+    });
+
+    $('btn-clear-data').addEventListener('click', () => {
+      if (confirm('Clear all MeshHunt data? This cannot be undone.')) {
+        Store.clearAll();
+        location.reload();
+      }
+    });
+
+    // Card clicks (delegation)
+    resultsGrid.addEventListener('click', (e) => {
+      // Favorite button
+      const favBtn = e.target.closest('[data-fav-id]');
+      if (favBtn) {
+        toggleFavorite(favBtn.dataset.favId);
+        return;
+      }
+
+      // Card click → open source URL
+      const card = e.target.closest('.result-card');
+      if (card && card.dataset.url) {
+        window.open(card.dataset.url, '_blank', 'noopener');
+      }
+    });
+
+    // Favorites card clicks
+    $('favorites-grid').addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-remove-fav]');
+      if (removeBtn) {
+        Store.removeFavorite(removeBtn.dataset.removeFav);
+        renderFavorites();
+        updateFavBadge();
+        return;
+      }
+
+      const card = e.target.closest('.fav-card');
+      if (card && card.dataset.url) {
+        window.open(card.dataset.url, '_blank', 'noopener');
+      }
+    });
+
+    // Infinite scroll
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+      if (entries[0].isIntersecting && currentQuery && !isSearching && allResults.length >= currentPage * 24) {
+        performSearch(currentQuery, currentPage + 1);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(loadingMore);
 
-    // Observe feature cards
-    document.querySelectorAll('.feature-card').forEach(card => {
-        card.classList.add('fade-in');
-        observer.observe(card);
-    });
+    // Show existing slug
+    const existingSlug = Store.getSyncSlug();
+    if (existingSlug) {
+      $('slug-text').textContent = existingSlug;
+      $('sync-slug-display').style.display = 'flex';
+    }
+  }
 
-    // Observe steps
-    document.querySelectorAll('.step').forEach(step => {
-        step.classList.add('fade-in');
-        observer.observe(step);
-    });
+  // ================================================================
+  // Start
+  // ================================================================
 
-    // Observe deploy cards
-    document.querySelectorAll('.deploy-card').forEach(card => {
-        card.classList.add('fade-in');
-        observer.observe(card);
-    });
-}
-
-// Make copyCode available globally
-window.copyCode = copyCode;
-
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-    initSmoothScroll();
-    initHeaderScroll();
-    initScrollAnimations();
-
-    // Check services immediately and then every 30 seconds
-    checkAllServices();
-    setInterval(checkAllServices, 30000);
-});
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
