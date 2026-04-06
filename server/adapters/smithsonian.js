@@ -25,12 +25,14 @@ class SmithsonianAdapter extends BaseAdapter {
       const url = `${this.baseUrl}/edan/search/explore_3d_packages?edan_q=${encodeURIComponent(query)}&page=${edanPage}`;
 
       const html = this.curlHTML(url);
+      console.log(`Smithsonian: got ${html.length} bytes, contains ${(html.match(/edan-search-result/g) || []).length} results`);
       const $ = cheerio.load(html);
 
       // Extract total count from "311 results" text
       let total = 0;
       const countText = $('body').text().match(/(\d+)\s+results/);
       if (countText) total = parseInt(countText[1], 10);
+      console.log(`Smithsonian: total=${total}, li count=${$('li.edan-search-result').length}`);
 
       const results = [];
 
