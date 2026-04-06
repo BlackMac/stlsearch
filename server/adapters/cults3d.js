@@ -4,9 +4,15 @@ class Cults3DAdapter extends BaseAdapter {
   constructor() {
     super('cults3d', 'Cults3D', {
       baseUrl: 'https://cults3d.com',
-      color: '#1a1a2e',
+      color: '#e8435a',
     });
     this.apiKey = process.env.CULTS3D_API_KEY || '';
+    this.username = process.env.CULTS3D_USERNAME || '';
+  }
+
+  isEnabled() {
+    // Cults3D GraphQL requires Basic Auth (username:api_key)
+    return !!(this.apiKey && this.username);
   }
 
   async search(query, options = {}) {
@@ -14,81 +20,66 @@ class Cults3DAdapter extends BaseAdapter {
     const offset = (page - 1) * perPage;
 
     try {
-      const sortMapping = {
-        relevant: 'PERTINENCE',
-        newest: 'DATE',
-        downloads: 'DOWNLOADS',
-        likes: 'POPULARITY',
-      };
-
       const graphqlQuery = {
-        query: `query SearchCreations($query: String!, $limit: Int!, $offset: Int!, $sort: SortEnum, $free: Boolean) {
-          searchCreations(query: $query, limit: $limit, offset: $offset, sort: $sort, free: $free) {
+        query: `{
+          creationsSearchBatch(query: "${query.replace(/"/g, '\\"')}", limit: ${perPage}, offset: ${offset}) {
             total
-            creations {
+            results {
               id
               slug
-              name
-              description
-              url
+              name(locale: EN)
+              shortUrl
               illustrationImageUrl
               creator {
                 nick
-                url
               }
               downloadsCount
               likesCount
               license
               free
               price
-              currency
               createdAt
             }
           }
         }`,
-        variables: {
-          query,
-          limit: perPage,
-          offset,
-          sort: sortMapping[sort] || 'PERTINENCE',
-          free: freeOnly || null,
-        },
       };
 
-      const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-
-      if (this.apiKey) {
-        headers['Authorization'] = `Bearer ${this.apiKey}`;
-      }
+      const auth = Buffer.from(`${this.username}:${this.apiKey}`).toString('base64');
 
       const data = await this.fetchJSON(`${this.baseUrl}/graphql`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Basic ${auth}`,
+        },
         body: JSON.stringify(graphqlQuery),
       });
 
-      const searchResult = data?.data?.searchCreations || {};
-      const creations = searchResult.creations || [];
+      const searchResult = data?.data?.creationsSearchBatch || {};
+      const creations = searchResult.results || [];
 
-      const results = creations.map(item => this.normalizeResult({
-        id: item.id || item.slug,
-        title: item.name,
-        description: (item.description || '').substring(0, 200),
-        thumbnail: item.illustrationImageUrl || '',
-        author: item.creator?.nick || 'Unknown',
-        authorUrl: item.creator?.url ? `https://cults3d.com${item.creator.url}` : '',
-        sourceUrl: item.url ? `https://cults3d.com${item.url}` : `https://cults3d.com/en/search?q=${encodeURIComponent(query)}`,
-        downloads: item.downloadsCount || -1,
-        likes: item.likesCount || -1,
-        license: item.license || 'Unknown',
-        isFree: item.free !== false,
-        price: item.price || null,
-        createdAt: item.createdAt,
-        fileFormats: ['stl'],
-      }));
+      const results = creations
+        .filter(item => {
+          if (freeOnly && item.free === false) return false;
+          return true;
+        })
+        .map(item => this.normalizeResult({
+          id: item.id || item.slug,
+          title: item.name,
+          description: '',
+          thumbnail: item.illustrationImageUrl || '',
+          author: item.creator?.nick || 'Unknown',
+          authorUrl: item.creator?.nick ? `https://cults3d.com/en/users/${item.creator.nick}` : '',
+          sourceUrl: item.shortUrl || `https://cults3d.com/en/search?q=${encodeURIComponent(query)}`,
+          downloads: item.downloadsCount || -1,
+          likes: item.likesCount || -1,
+          license: item.license || 'Unknown',
+          isFree: item.free !== false,
+          price: item.price || null,
+          createdAt: item.createdAt,
+          fileFormats: ['stl'],
+        }));
 
       return {
         results,

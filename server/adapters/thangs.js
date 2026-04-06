@@ -13,32 +13,25 @@ class ThangsAdapter extends BaseAdapter {
 
     try {
       const params = new URLSearchParams({
-        q: query,
-        page: String(page),
+        searchTerm: query,
+        page: String(page - 1), // zero-indexed
         pageSize: String(perPage),
-        scope: 'all',
-        view: 'list',
+        collapse: 'true',
       });
 
-      if (sort === 'newest') params.set('sort', 'date');
-      else if (sort === 'downloads') params.set('sort', 'downloads');
-      else if (sort === 'likes') params.set('sort', 'likes');
+      if (freeOnly) params.set('freeModels', 'true');
 
-      // Thangs has an internal API used by their frontend
-      const url = `https://thangs.com/api/search?${params}`;
+      const url = `https://thangs.com/api/models/v2/search-by-text?${params}`;
       const data = await this.fetchJSON(url, {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'MeshHunt/1.0',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         },
       });
 
       const items = data.results || data.models || data.hits || [];
 
-      const results = (Array.isArray(items) ? items : []).filter(item => {
-        if (freeOnly && item.price && item.price > 0) return false;
-        return true;
-      }).map(item => {
+      const results = (Array.isArray(items) ? items : []).map(item => {
         const thumbnail = item.thumbnailUrl || item.thumbnail || item.previewImageUrl || '';
 
         return this.normalizeResult({

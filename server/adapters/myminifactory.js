@@ -9,6 +9,11 @@ class MyMiniFactoryAdapter extends BaseAdapter {
     this.apiKey = process.env.MYMINIFACTORY_API_KEY || '';
   }
 
+  isEnabled() {
+    // MyMiniFactory API requires an API key
+    return !!this.apiKey;
+  }
+
   async search(query, options = {}) {
     const { page = 1, perPage = 20, sort = 'relevant', freeOnly = true } = options;
 

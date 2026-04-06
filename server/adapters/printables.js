@@ -25,10 +25,8 @@ class PrintablesAdapter extends BaseAdapter {
               id
               name
               slug
-              description
               datePublished
               downloadCount
-              displayCount
               likesCount
               image {
                 filePath
@@ -38,12 +36,10 @@ class PrintablesAdapter extends BaseAdapter {
                 slug
               }
               price
-              currency
               license {
                 name
               }
             }
-            cursor
             total
           }
         }`,
@@ -60,6 +56,9 @@ class PrintablesAdapter extends BaseAdapter {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Origin': 'https://www.printables.com',
+          'Referer': 'https://www.printables.com/',
         },
         body: JSON.stringify(graphqlQuery),
       });
@@ -81,7 +80,7 @@ class PrintablesAdapter extends BaseAdapter {
           return this.normalizeResult({
             id: item.id,
             title: item.name,
-            description: (item.description || '').substring(0, 200),
+            description: '',
             thumbnail,
             author: item.user?.publicUsername || 'Unknown',
             authorUrl: item.user?.slug ? `https://www.printables.com/@${item.user.slug}` : '',
