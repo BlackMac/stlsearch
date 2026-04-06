@@ -44,7 +44,7 @@ class MyMiniFactoryAdapter extends BaseAdapter {
       const results = (Array.isArray(items) ? items : []).map(item => {
         const images = item.images || [];
         const thumbnail = images.length > 0
-          ? (images[0].thumbnail?.url || images[0].original?.url || images[0].url || '')
+          ? (images[0].standard?.url || images[0].large?.url || images[0].thumbnail?.url || images[0].original?.url || '')
           : (item.cover_image || item.thumbnail || '');
 
         return this.normalizeResult({
