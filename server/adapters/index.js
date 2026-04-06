@@ -1,12 +1,12 @@
 const { ThingiverseAdapter } = require('./thingiverse');
 const { PrintablesAdapter } = require('./printables');
 const { Cults3DAdapter } = require('./cults3d');
-const { MyMiniFactoryAdapter } = require('./myminifactory');
 const { ThangsAdapter } = require('./thangs');
 const { SketchfabAdapter } = require('./sketchfab');
 
 // Only include adapters with working APIs.
-// Excluded (no working server-side access):
+// Excluded:
+//   MyMiniFactory (requires OAuth registration, not practical)
 //   MakerWorld (403 on all endpoints), GrabCAD/Free3D/TurboSquid/CGTrader (Cloudflare),
 //   NIH 3D (404), YouMagine (404/503)
 const adapters = [
@@ -15,7 +15,6 @@ const adapters = [
   new PrintablesAdapter(),
   new ThangsAdapter(),
   new Cults3DAdapter(),
-  new MyMiniFactoryAdapter(),
 ];
 
 /**
