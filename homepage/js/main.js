@@ -393,7 +393,19 @@
       Store.setEnabledSources(newEnabled);
       renderSourcePills();
       renderSourceSettings();
-      if (currentQuery) performSearch(currentQuery);
+      if (currentQuery) {
+        // Immediately filter displayed results for instant feedback
+        const filtered = allResults.filter(r => newEnabled.includes(r.source));
+        renderResults(filtered);
+        if (filtered.length === 0) {
+          emptyState.style.display = 'block';
+        } else {
+          emptyState.style.display = 'none';
+        }
+        // Then re-search from server with updated sources
+        isSearching = false;
+        performSearch(currentQuery);
+      }
     });
 
     // Header buttons
