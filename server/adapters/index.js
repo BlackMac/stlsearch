@@ -1,20 +1,18 @@
 const { ThingiverseAdapter } = require('./thingiverse');
 const { PrintablesAdapter } = require('./printables');
-const { Cults3DAdapter } = require('./cults3d');
-const { ThangsAdapter } = require('./thangs');
 const { SketchfabAdapter } = require('./sketchfab');
 
 // Only include adapters with working APIs.
 // Excluded:
-//   MyMiniFactory (requires OAuth registration, not practical)
-//   MakerWorld (403 on all endpoints), GrabCAD/Free3D/TurboSquid/CGTrader (Cloudflare),
+//   Thangs (Cloudflare blocks curl from Docker)
+//   Cults3D (GraphQL returns no results)
+//   MyMiniFactory (requires OAuth), MakerWorld (403),
+//   GrabCAD/Free3D/TurboSquid/CGTrader (Cloudflare),
 //   NIH 3D (404), YouMagine (404/503)
 const adapters = [
   new SketchfabAdapter(),
   new ThingiverseAdapter(),
   new PrintablesAdapter(),
-  new ThangsAdapter(),
-  new Cults3DAdapter(),
 ];
 
 /**
