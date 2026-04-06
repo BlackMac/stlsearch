@@ -37,7 +37,12 @@ class MyMiniFactoryAdapter extends BaseAdapter {
       const url = `${this.baseUrl}/api/v2/search?${params}`;
       console.log(`MyMiniFactory: fetching ${url.replace(this.apiKey, 'KEY')}`);
       const data = this.curlJSON(url);
-      console.log(`MyMiniFactory: response keys: ${Object.keys(data)}, total_count: ${data.total_count}, items type: ${typeof data.items}, items length: ${Array.isArray(data.items) ? data.items.length : 'not array'}`);
+      if (data.error) {
+        console.log(`MyMiniFactory: API error: ${data.status} ${data.detail} - ${data.error_description}`);
+        console.log(`MyMiniFactory: API key present: ${!!this.apiKey}, length: ${this.apiKey.length}`);
+      } else {
+        console.log(`MyMiniFactory: got ${data.total_count} total, ${(data.items || []).length} items`);
+      }
 
       const items = data.items || data.objects || data.results || [];
       const total = data.total_count || data.total || items.length;
