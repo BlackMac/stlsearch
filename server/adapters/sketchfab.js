@@ -39,7 +39,8 @@ class SketchfabAdapter extends BaseAdapter {
 
       const results = items.map(item => {
         const thumbs = item.thumbnails?.images || [];
-        const thumb = thumbs.find(t => t.width >= 200 && t.width <= 400) || thumbs[0];
+        // Pick the largest thumbnail available
+        const thumb = thumbs.reduce((best, t) => (!best || (t.width || 0) > (best.width || 0)) ? t : best, null);
 
         return this.normalizeResult({
           id: item.uid,
