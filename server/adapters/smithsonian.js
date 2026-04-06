@@ -26,6 +26,7 @@ class SmithsonianAdapter extends BaseAdapter {
 
       const html = this.curlHTML(url);
       console.log(`Smithsonian: got ${html.length} bytes, contains ${(html.match(/edan-search-result/g) || []).length} results`);
+      console.log(`Smithsonian: first 500 chars: ${html.substring(0, 500)}`);
       const $ = cheerio.load(html);
 
       // Extract total count from "311 results" text
