@@ -35,7 +35,8 @@ class MyMiniFactoryAdapter extends BaseAdapter {
       if (freeOnly) params.set('price', 'free');
 
       const url = `${this.baseUrl}/api/v2/search?${params}`;
-      console.log(`MyMiniFactory: fetching ${url.replace(this.apiKey, 'KEY')}`);
+      console.log(`MyMiniFactory: fetching ${url.replace(this.apiKey, 'KEY')}`)
+      console.log(`MyMiniFactory: key value: ${this.apiKey.substring(0, 8)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
       const data = this.curlJSON(url);
       if (data.error) {
         console.log(`MyMiniFactory: API error: ${data.status} ${data.detail} - ${data.error_description}`);
