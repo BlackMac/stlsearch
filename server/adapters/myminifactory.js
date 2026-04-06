@@ -25,6 +25,7 @@ class MyMiniFactoryAdapter extends BaseAdapter {
         q: query,
         page: String(page),
         per_page: String(perPage),
+        key: this.apiKey,
       });
 
       if (sort === 'newest') params.set('sort', 'date');
@@ -33,15 +34,8 @@ class MyMiniFactoryAdapter extends BaseAdapter {
 
       if (freeOnly) params.set('price', 'free');
 
-      const headers = {
-        'Accept': 'application/json',
-      };
-      if (this.apiKey) {
-        headers['Authorization'] = `Bearer ${this.apiKey}`;
-      }
-
       const url = `${this.baseUrl}/api/v2/search?${params}`;
-      const data = await this.fetchJSON(url, { headers });
+      const data = this.curlJSON(url);
 
       const items = data.items || data.objects || data.results || [];
       const total = data.total_count || data.total || items.length;
