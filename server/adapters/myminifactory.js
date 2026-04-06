@@ -25,7 +25,6 @@ class MyMiniFactoryAdapter extends BaseAdapter {
         q: query,
         page: String(page),
         per_page: String(perPage),
-        key: this.apiKey,
       });
 
       if (sort === 'newest') params.set('sort', 'date');
@@ -35,15 +34,9 @@ class MyMiniFactoryAdapter extends BaseAdapter {
       if (freeOnly) params.set('price', 'free');
 
       const url = `${this.baseUrl}/api/v2/search?${params}`;
-      console.log(`MyMiniFactory: fetching ${url.replace(this.apiKey, 'KEY')}`)
-      console.log(`MyMiniFactory: key value: ${this.apiKey.substring(0, 8)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
-      const data = this.curlJSON(url);
-      if (data.error) {
-        console.log(`MyMiniFactory: API error: ${data.status} ${data.detail} - ${data.error_description}`);
-        console.log(`MyMiniFactory: API key present: ${!!this.apiKey}, length: ${this.apiKey.length}`);
-      } else {
-        console.log(`MyMiniFactory: got ${data.total_count} total, ${(data.items || []).length} items`);
-      }
+      const data = this.curlJSON(url, {
+        headers: { 'X-Api-Key': this.apiKey },
+      });
 
       const items = data.items || data.objects || data.results || [];
       const total = data.total_count || data.total || items.length;
