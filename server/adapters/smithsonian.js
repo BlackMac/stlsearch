@@ -24,7 +24,7 @@ class SmithsonianAdapter extends BaseAdapter {
       const edanPage = page - 1;
       const url = `${this.baseUrl}/edan/search/explore_3d_packages?edan_q=${encodeURIComponent(query)}&page=${edanPage}`;
 
-      const html = await this.fetchHTML(url, {}, 10000);
+      const html = this.curlHTML(url);
       const $ = cheerio.load(html);
 
       // Extract total count from "311 results" text

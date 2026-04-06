@@ -143,6 +143,26 @@ class BaseAdapter {
     }
     return JSON.parse(result);
   }
+
+  /**
+   * Fetch HTML via curl to bypass TLS fingerprinting.
+   */
+  curlHTML(url, options = {}) {
+    const { timeout = 10 } = options;
+    const args = [
+      'curl', '-s', '-S', '--max-time', String(timeout), '-L',
+      '-H', 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      '-H', 'Accept: text/html,application/xhtml+xml',
+      url,
+    ];
+    const cmd = args.map(a => {
+      if (a.includes("'") || a.includes(' ') || a.includes('"') || a.includes('\\') || a.includes('$') || a.includes('`') || a.includes('(') || a.includes('{')) {
+        return "'" + a.replace(/'/g, "'\\''") + "'";
+      }
+      return a;
+    }).join(' ');
+    return execSync(cmd, { timeout: (timeout + 2) * 1000, encoding: 'utf8' });
+  }
 }
 
 module.exports = { BaseAdapter };
