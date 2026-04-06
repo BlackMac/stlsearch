@@ -116,8 +116,12 @@ function sortResults(results, sort) {
       results.sort((a, b) => (b.likes || 0) - (a.likes || 0));
       break;
     default:
-      // Interleave sources for variety on relevance sort
-      interleaveResults(results);
+      // Sort by a combined score: downloads + likes, with source variety
+      results.sort((a, b) => {
+        const scoreA = Math.max(a.downloads || 0, 0) + Math.max(a.likes || 0, 0) * 2;
+        const scoreB = Math.max(b.downloads || 0, 0) + Math.max(b.likes || 0, 0) * 2;
+        return scoreB - scoreA;
+      });
       break;
   }
 }

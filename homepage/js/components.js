@@ -19,7 +19,7 @@ const Components = {
     const isFav = Store.isFavorite(model.id);
     const thumbSrc = model.thumbnail || '';
     const thumbHtml = thumbSrc
-      ? `<img src="${Utils.escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-placeholder\\'>${Components.icons.cube}</div>'">`
+      ? `<img src="${Utils.escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="card-thumb-placeholder" style="display:none">${this.icons.cube}</div>`
       : `<div class="card-thumb-placeholder">${this.icons.cube}</div>`;
 
     return `
