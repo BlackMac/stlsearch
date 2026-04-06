@@ -18,9 +18,19 @@ const Components = {
   resultCard(model) {
     const isFav = Store.isFavorite(model.id);
     const thumbSrc = model.thumbnail || '';
+    // onload: reject tracking pixels (<20px), mark low-res images for CSS treatment
+    // onerror: broken image - hide and show placeholder
+    const imgValidation = `onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" onload="if(this.naturalWidth<20||this.naturalHeight<20){this.style.display='none';this.nextElementSibling.style.display='flex'}else if(this.naturalWidth<200||this.naturalHeight<200){this.classList.add('low-res')}"`;
     const thumbHtml = thumbSrc
-      ? `<img src="${Utils.escapeHtml(thumbSrc)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="card-thumb-placeholder" style="display:none">${this.icons.cube}</div>`
+      ? `<img src="${Utils.escapeHtml(thumbSrc)}" alt="" loading="lazy" ${imgValidation}><div class="card-thumb-placeholder" style="display:none">${this.icons.cube}</div>`
       : `<div class="card-thumb-placeholder">${this.icons.cube}</div>`;
+
+    // "Also on" badges for deduplicated cross-source results
+    const alsoOnHtml = model.alsoOn && model.alsoOn.length > 0
+      ? `<div class="card-also-on">${model.alsoOn.map(s =>
+          `<a href="${Utils.escapeHtml(s.sourceUrl)}" target="_blank" rel="noopener" class="also-on-badge" onclick="event.stopPropagation()" title="Also on ${Utils.escapeHtml(s.sourceName)}">${Utils.escapeHtml(s.sourceName)}</a>`
+        ).join('')}</div>`
+      : '';
 
     return `
       <article class="result-card source-${Utils.escapeHtml(model.source)}" data-id="${Utils.escapeHtml(model.id)}" data-url="${Utils.escapeHtml(model.sourceUrl)}">
@@ -39,6 +49,7 @@ const Components = {
             ${model.downloads >= 0 ? `<span class="card-stat">${this.icons.download} ${Utils.formatNumber(model.downloads)}</span>` : ''}
             ${model.likes >= 0 ? `<span class="card-stat">${this.icons.like} ${Utils.formatNumber(model.likes)}</span>` : ''}
           </div>
+          ${alsoOnHtml}
         </div>
         <div class="card-footer">
           <span class="card-license">${Utils.escapeHtml(model.license)}</span>

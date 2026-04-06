@@ -79,12 +79,15 @@ async function searchAll(query, options = {}) {
     }
   });
 
+  // Deduplicate cross-source results (same model on multiple platforms)
+  const deduped = deduplicateResults(allResults);
+
   // Sort merged results
-  sortResults(allResults, sort);
+  sortResults(deduped, sort);
 
   return {
-    results: allResults,
-    total: allResults.length,
+    results: deduped,
+    total: deduped.length,
     sources: sourceStats,
     query,
     page,
@@ -115,6 +118,93 @@ function sortResults(results, sort) {
       });
       break;
   }
+}
+
+/**
+ * Normalize a title for fuzzy comparison.
+ * Strips punctuation, extra spaces, lowercases, removes common suffixes.
+ */
+function normalizeTitle(title) {
+  return (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')    // strip punctuation
+    .replace(/\s+/g, ' ')           // collapse whitespace
+    .trim();
+}
+
+/**
+ * Check if two titles are similar enough to be duplicates.
+ * Uses normalized exact match or substring containment for short titles.
+ */
+function isSimilarTitle(a, b) {
+  const na = normalizeTitle(a);
+  const nb = normalizeTitle(b);
+  if (!na || !nb || na.length < 4 || nb.length < 4) return false;
+
+  // Exact normalized match
+  if (na === nb) return true;
+
+  // One contains the other (for cases like "Parametric Hinge" vs "Parametric hinge v2")
+  const shorter = na.length <= nb.length ? na : nb;
+  const longer = na.length <= nb.length ? nb : na;
+  if (shorter.length >= 8 && longer.startsWith(shorter)) return true;
+
+  // Token-based similarity: if 80%+ of words overlap
+  const tokensA = new Set(na.split(' ').filter(w => w.length > 2));
+  const tokensB = new Set(nb.split(' ').filter(w => w.length > 2));
+  if (tokensA.size < 2 || tokensB.size < 2) return false;
+  const overlap = [...tokensA].filter(t => tokensB.has(t)).length;
+  const similarity = overlap / Math.min(tokensA.size, tokensB.size);
+  return similarity >= 0.8;
+}
+
+/**
+ * Score a result for dedup winner selection.
+ * Higher score = better result to keep.
+ */
+function resultScore(r) {
+  return Math.max(r.downloads || 0, 0) + Math.max(r.likes || 0, 0) * 2 +
+    (r.thumbnail ? 10 : 0) + (r.description ? 5 : 0);
+}
+
+/**
+ * Remove duplicate models across sources.
+ * When the same model appears on multiple platforms, keeps the one with
+ * the best stats and adds a "alsoOn" array to track other sources.
+ */
+function deduplicateResults(results) {
+  const kept = [];
+  const usedIndices = new Set();
+
+  for (let i = 0; i < results.length; i++) {
+    if (usedIndices.has(i)) continue;
+
+    let best = results[i];
+    const alsoOn = [];
+
+    for (let j = i + 1; j < results.length; j++) {
+      if (usedIndices.has(j)) continue;
+      if (results[j].source === best.source) continue; // same source can't be a cross-source dup
+
+      if (isSimilarTitle(best.title, results[j].title)) {
+        usedIndices.add(j);
+        // Keep the one with better score
+        if (resultScore(results[j]) > resultScore(best)) {
+          alsoOn.push({ source: best.source, sourceName: best.sourceName, sourceUrl: best.sourceUrl });
+          best = results[j];
+        } else {
+          alsoOn.push({ source: results[j].source, sourceName: results[j].sourceName, sourceUrl: results[j].sourceUrl });
+        }
+      }
+    }
+
+    if (alsoOn.length > 0) {
+      best.alsoOn = alsoOn;
+    }
+    kept.push(best);
+  }
+
+  return kept;
 }
 
 module.exports = { adapters, getAdapters, searchAll };
