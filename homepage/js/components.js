@@ -38,7 +38,7 @@ const Components = {
           ${thumbHtml}
           <span class="card-source-badge" style="background:var(--source-color)">${Utils.escapeHtml(model.sourceName)}</span>
           ${model.price ? `<span class="card-price-badge">$${model.price}</span>` : ''}
-          <button class="card-fav-btn ${isFav ? 'favorited' : ''}" data-fav-id="${Utils.escapeHtml(model.id)}" onclick="event.stopPropagation()">
+          <button class="card-fav-btn ${isFav ? 'favorited' : ''}" data-fav-id="${Utils.escapeHtml(model.id)}">
             ${isFav ? this.icons.heartFilled : this.icons.heart}
           </button>
         </div>
