@@ -14,47 +14,54 @@ class ThangsAdapter extends BaseAdapter {
     try {
       const params = new URLSearchParams({
         searchTerm: query,
-        page: String(page - 1), // zero-indexed
+        page: String(page - 1),
         pageSize: String(perPage),
-        collapse: 'true',
       });
 
-      if (freeOnly) params.set('freeModels', 'true');
-
       const url = `https://thangs.com/api/models/v2/search-by-text?${params}`;
-      const data = await this.fetchJSON(url, {
+
+      // Use curl to bypass TLS fingerprinting (Node fetch gets 403)
+      const data = this.curlJSON(url, {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         },
       });
 
-      const items = data.results || data.models || data.hits || [];
+      const items = data.results || [];
 
-      const results = (Array.isArray(items) ? items : []).map(item => {
-        const thumbnail = item.thumbnailUrl || item.thumbnail || item.previewImageUrl || '';
+      const results = (Array.isArray(items) ? items : [])
+        .filter(item => {
+          if (freeOnly) {
+            const price = item.marketplaceInfo?.priceInUSD;
+            if (price && price > 0) return false;
+            if (item.visibility === 'market-paid') return false;
+          }
+          return true;
+        })
+        .map(item => {
+          const thumbnail = item.thumbnails?.[0] || '';
 
-        return this.normalizeResult({
-          id: item.id || item.modelId,
-          title: item.name || item.title,
-          description: (item.description || item.shortDescription || '').substring(0, 200),
-          thumbnail,
-          author: item.ownerUsername || item.creator?.name || item.owner?.username || 'Unknown',
-          authorUrl: item.ownerUsername ? `https://thangs.com/designer/${item.ownerUsername}` : '',
-          sourceUrl: item.url || item.publicUrl || `https://thangs.com/model/${item.id || item.modelId}`,
-          downloads: item.downloadCount || item.downloads || -1,
-          likes: item.likeCount || item.likes || -1,
-          license: item.license || 'Unknown',
-          isFree: !item.price || item.price === 0,
-          price: item.price && item.price > 0 ? item.price : null,
-          createdAt: item.createdAt || item.publishedAt,
-          fileFormats: item.fileTypes || ['stl'],
+          return this.normalizeResult({
+            id: item.modelId || item.externalId,
+            title: item.name || 'Untitled',
+            description: (item.description || '').substring(0, 200),
+            thumbnail,
+            author: item.ownerUsername || 'Unknown',
+            authorUrl: item.ownerUsername ? `https://thangs.com/designer/${encodeURIComponent(item.ownerUsername)}` : '',
+            sourceUrl: `https://thangs.com/m/${item.modelId || item.externalId}`,
+            downloads: item.downloadCount ?? -1,
+            likes: item.likeCount ?? -1,
+            license: 'Unknown',
+            isFree: !item.marketplaceInfo?.priceInUSD,
+            price: item.marketplaceInfo?.priceInUSD || null,
+            createdAt: item.createdAt || null,
+            fileFormats: ['stl'],
+          });
         });
-      });
 
       return {
         results,
-        total: data.totalResults || data.total || results.length,
+        total: data.searchMetadata?.totalResults || results.length,
         hasMore: results.length === perPage,
       };
     } catch (err) {

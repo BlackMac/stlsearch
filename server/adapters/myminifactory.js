@@ -10,8 +10,11 @@ class MyMiniFactoryAdapter extends BaseAdapter {
   }
 
   isEnabled() {
-    // MyMiniFactory API requires an API key
     return !!this.apiKey;
+  }
+
+  get statusReason() {
+    return this.apiKey ? null : 'Requires MYMINIFACTORY_API_KEY';
   }
 
   async search(query, options = {}) {

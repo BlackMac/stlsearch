@@ -3,7 +3,7 @@ const { BaseAdapter } = require('./base');
 class PrintablesAdapter extends BaseAdapter {
   constructor() {
     super('printables', 'Printables', {
-      baseUrl: 'https://www.printables.com',
+      baseUrl: 'https://api.printables.com',
       color: '#fa6831',
     });
   }
@@ -16,15 +16,14 @@ class PrintablesAdapter extends BaseAdapter {
       const ordering = sort === 'newest' ? '-first_publish'
         : sort === 'downloads' ? '-download_count'
         : sort === 'likes' ? '-likes_count'
-        : '-relevance';
+        : null; // null = default relevance
 
       const graphqlQuery = {
-        query: `query SearchModels($query: String!, $limit: Int!, $offset: Int!, $ordering: String) {
-          result: searchModelsV2(query: $query, limit: $limit, offset: $offset, ordering: $ordering) {
+        query: `query SearchPrints($query: String!, $limit: Int!, $offset: Int!${ordering ? ', $ordering: SearchChoicesEnum' : ''}) {
+          result: searchPrints2(query: $query, limit: $limit, offset: $offset${ordering ? ', ordering: $ordering' : ''}) {
             items {
               id
               name
-              slug
               datePublished
               downloadCount
               likesCount
@@ -33,42 +32,34 @@ class PrintablesAdapter extends BaseAdapter {
               }
               user {
                 publicUsername
-                slug
               }
               price
-              license {
-                name
-              }
             }
-            total
           }
         }`,
         variables: {
           query,
           limit: perPage,
           offset,
-          ordering,
+          ...(ordering ? { ordering } : {}),
         },
       };
 
-      const data = await this.fetchJSON(`${this.baseUrl}/graphql/`, {
+      // Use curl to bypass TLS fingerprinting (Node fetch gets 403 on www.printables.com)
+      const data = this.curlJSON(`${this.baseUrl}/graphql/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-          'Origin': 'https://www.printables.com',
-          'Referer': 'https://www.printables.com/',
         },
         body: JSON.stringify(graphqlQuery),
       });
 
-      const result = data?.data?.result || {};
-      const items = result.items || [];
+      const items = data?.data?.result?.items || [];
 
       const results = items
         .filter(item => {
-          if (freeOnly && item.price && item.price > 0) return false;
+          if (freeOnly && item.price && Number(item.price) > 0) return false;
           return true;
         })
         .map(item => {
@@ -79,17 +70,17 @@ class PrintablesAdapter extends BaseAdapter {
 
           return this.normalizeResult({
             id: item.id,
-            title: item.name,
+            title: item.name || 'Untitled',
             description: '',
             thumbnail,
             author: item.user?.publicUsername || 'Unknown',
-            authorUrl: item.user?.slug ? `https://www.printables.com/@${item.user.slug}` : '',
-            sourceUrl: `https://www.printables.com/model/${item.id}-${item.slug || ''}`,
-            downloads: item.downloadCount || -1,
-            likes: item.likesCount || -1,
-            license: item.license?.name || 'Unknown',
-            isFree: !item.price || item.price === 0,
-            price: item.price && item.price > 0 ? item.price : null,
+            authorUrl: item.user?.publicUsername ? `https://www.printables.com/@${item.user.publicUsername}` : '',
+            sourceUrl: `https://www.printables.com/model/${item.id}`,
+            downloads: item.downloadCount ?? -1,
+            likes: item.likesCount ?? -1,
+            license: 'Unknown',
+            isFree: !item.price || Number(item.price) === 0,
+            price: item.price && Number(item.price) > 0 ? Number(item.price) : null,
             createdAt: item.datePublished,
             fileFormats: ['stl', '3mf'],
           });
@@ -97,8 +88,8 @@ class PrintablesAdapter extends BaseAdapter {
 
       return {
         results,
-        total: result.total || results.length,
-        hasMore: offset + perPage < (result.total || 0),
+        total: results.length,
+        hasMore: results.length === perPage,
       };
     } catch (err) {
       console.error(`Printables search error: ${err.message}`);

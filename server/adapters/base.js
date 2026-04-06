@@ -1,3 +1,5 @@
+const { execSync } = require('child_process');
+
 /**
  * Base adapter class for STL source integrations.
  * All source adapters extend this class and implement search().
@@ -41,6 +43,7 @@ class BaseAdapter {
       color: this.color,
       icon: this.icon,
       enabled: this.isEnabled(),
+      statusReason: this.statusReason || null,
     };
   }
 
@@ -106,6 +109,31 @@ class BaseAdapter {
     }, timeout);
     if (!res.ok) throw new Error(`${this.displayName}: HTTP ${res.status}`);
     return res.text();
+  }
+
+  /**
+   * Fetch via curl to bypass TLS fingerprinting that blocks Node.js fetch.
+   * Many sites (Cloudflare-protected) accept curl but reject Node fetch.
+   */
+  curlJSON(url, options = {}) {
+    const { method = 'GET', headers = {}, body = null, timeout = 8 } = options;
+    const args = ['curl', '-s', '-S', '--max-time', String(timeout)];
+    args.push('-X', method);
+    for (const [k, v] of Object.entries(headers)) {
+      args.push('-H', `${k}: ${v}`);
+    }
+    if (body) {
+      args.push('-d', body);
+    }
+    args.push(url);
+    const cmd = args.map(a => {
+      if (a.includes("'") || a.includes(' ') || a.includes('"') || a.includes('\\') || a.includes('$') || a.includes('`') || a.includes('(') || a.includes('{')) {
+        return "'" + a.replace(/'/g, "'\\''") + "'";
+      }
+      return a;
+    }).join(' ');
+    const result = execSync(cmd, { timeout: (timeout + 2) * 1000, encoding: 'utf8' });
+    return JSON.parse(result);
   }
 }
 

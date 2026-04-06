@@ -3,30 +3,19 @@ const { PrintablesAdapter } = require('./printables');
 const { Cults3DAdapter } = require('./cults3d');
 const { MyMiniFactoryAdapter } = require('./myminifactory');
 const { ThangsAdapter } = require('./thangs');
-const { MakerWorldAdapter } = require('./makerworld');
 const { SketchfabAdapter } = require('./sketchfab');
-const { GrabCADAdapter } = require('./grabcad');
-const { NIH3DAdapter } = require('./nih3d');
-const { YouMagineAdapter } = require('./youmagine');
-const { Free3DAdapter } = require('./free3d');
-const { TurboSquidAdapter } = require('./turbosquid');
-const { CGTraderAdapter } = require('./cgtrader');
 
-// Initialize all adapters
+// Only include adapters with working APIs.
+// Excluded (no working server-side access):
+//   MakerWorld (403 on all endpoints), GrabCAD/Free3D/TurboSquid/CGTrader (Cloudflare),
+//   NIH 3D (404), YouMagine (404/503)
 const adapters = [
+  new SketchfabAdapter(),
   new ThingiverseAdapter(),
   new PrintablesAdapter(),
+  new ThangsAdapter(),
   new Cults3DAdapter(),
   new MyMiniFactoryAdapter(),
-  new ThangsAdapter(),
-  new MakerWorldAdapter(),
-  new SketchfabAdapter(),
-  new GrabCADAdapter(),
-  new NIH3DAdapter(),
-  new YouMagineAdapter(),
-  new Free3DAdapter(),
-  new TurboSquidAdapter(),
-  new CGTraderAdapter(),
 ];
 
 /**
@@ -52,6 +41,8 @@ async function searchAll(query, options = {}) {
   } = options;
 
   const activeAdapters = getAdapters(sources).filter(a => a.isEnabled());
+
+  console.log(`Searching ${activeAdapters.length} sources for "${query}": ${activeAdapters.map(a => a.name).join(', ')}`);
 
   const results = await Promise.allSettled(
     activeAdapters.map(adapter =>
@@ -116,7 +107,7 @@ function sortResults(results, sort) {
       results.sort((a, b) => (b.likes || 0) - (a.likes || 0));
       break;
     default:
-      // Sort by a combined score: downloads + likes, with source variety
+      // Sort by combined score: downloads + likes*2, with source variety
       results.sort((a, b) => {
         const scoreA = Math.max(a.downloads || 0, 0) + Math.max(a.likes || 0, 0) * 2;
         const scoreB = Math.max(b.downloads || 0, 0) + Math.max(b.likes || 0, 0) * 2;
@@ -124,30 +115,6 @@ function sortResults(results, sort) {
       });
       break;
   }
-}
-
-function interleaveResults(results) {
-  const bySrc = {};
-  for (const r of results) {
-    if (!bySrc[r.source]) bySrc[r.source] = [];
-    bySrc[r.source].push(r);
-  }
-  const sources = Object.keys(bySrc);
-  const interleaved = [];
-  let idx = 0;
-  let added = true;
-  while (added) {
-    added = false;
-    for (const src of sources) {
-      if (idx < bySrc[src].length) {
-        interleaved.push(bySrc[src][idx]);
-        added = true;
-      }
-    }
-    idx++;
-  }
-  results.length = 0;
-  results.push(...interleaved);
 }
 
 module.exports = { adapters, getAdapters, searchAll };
