@@ -510,7 +510,8 @@ function createHomepageApp() {
       const allowed = ['thingiverse.com', 'printables.com', 'media.printables.com',
         'cults3d.com', 'myminifactory.com', 'thangs.com', 'makerworld.com',
         'sketchfab.com', 'grabcad.com', 'cdn.thingiverse.com', 'cdn.myminifactory.com',
-        'storage.googleapis.com', 'thangs-thumbnails', 'threedscans.com'];
+        'storage.googleapis.com', 'thangs-thumbnails', 'threedscans.com',
+        '3d-api.si.edu'];
       const hostname = new URL(decoded).hostname;
       if (!allowed.some(d => hostname.includes(d))) {
         return res.status(403).json({ error: 'Domain not allowed' });

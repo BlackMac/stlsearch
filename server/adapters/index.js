@@ -2,6 +2,7 @@ const { ThingiverseAdapter } = require('./thingiverse');
 const { PrintablesAdapter } = require('./printables');
 const { SketchfabAdapter } = require('./sketchfab');
 const { ThreeDScansAdapter } = require('./threedscans');
+const { SmithsonianAdapter } = require('./smithsonian');
 
 // Only include adapters with working APIs.
 const adapters = [
@@ -9,6 +10,7 @@ const adapters = [
   new ThingiverseAdapter(),
   new PrintablesAdapter(),
   new ThreeDScansAdapter(),
+  new SmithsonianAdapter(),
 ];
 
 /**
