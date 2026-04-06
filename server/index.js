@@ -511,7 +511,7 @@ function createHomepageApp() {
         'cults3d.com', 'myminifactory.com', 'thangs.com', 'makerworld.com',
         'sketchfab.com', 'grabcad.com', 'cdn.thingiverse.com', 'cdn.myminifactory.com',
         'storage.googleapis.com', 'thangs-thumbnails', 'threedscans.com',
-        '3d-api.si.edu'];
+        '3d-api.si.edu', 'dl.myminifactory.com', 'images2.myminifactory.com'];
       const hostname = new URL(decoded).hostname;
       if (!allowed.some(d => hostname.includes(d))) {
         return res.status(403).json({ error: 'Domain not allowed' });
