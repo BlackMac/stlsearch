@@ -5,6 +5,7 @@ const { ThreeDScansAdapter } = require('./threedscans');
 const { SmithsonianAdapter } = require('./smithsonian');
 const { MyMiniFactoryAdapter } = require('./myminifactory');
 const { ScanTheWorldAdapter } = require('./scantheworld');
+const { EuropeanaAdapter } = require('./europeana');
 
 // Only include adapters with working APIs.
 const adapters = [
@@ -13,6 +14,7 @@ const adapters = [
   new PrintablesAdapter(),
   new MyMiniFactoryAdapter(),
   new ScanTheWorldAdapter(),
+  new EuropeanaAdapter(),
   new ThreeDScansAdapter(),
   new SmithsonianAdapter(),
 ];

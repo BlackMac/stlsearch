@@ -43,6 +43,7 @@ services:
       - CULTS3D_API_KEY=${CULTS3D_API_KEY:-}
       - MYMINIFACTORY_API_KEY=${MYMINIFACTORY_API_KEY:-}
       - SKETCHFAB_API_TOKEN=${SKETCHFAB_API_TOKEN:-}
+      - EUROPEANA_API_KEY=${EUROPEANA_API_KEY:-}
     restart: unless-stopped
     healthcheck:
       test: wget -q --spider http://localhost:3000/health && wget -q --spider http://localhost:8090/api/health || exit 1
