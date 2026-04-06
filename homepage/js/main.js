@@ -396,11 +396,17 @@
       Store.setEnabledSources(newEnabled);
       renderSourcePills();
       renderSourceSettings();
-      if (currentQuery && allResults.length > 0) {
-        // Client-side filter: immediately show/hide cards from toggled source
-        const filtered = allResults.filter(r => newEnabled.includes(r.source));
-        renderResults(filtered);
-        emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+      if (currentQuery) {
+        if (!isActive) {
+          // Enabling a new source: need to re-fetch from server to get its results
+          isSearching = false;
+          performSearch(currentQuery);
+        } else if (allResults.length > 0) {
+          // Disabling a source: client-side filter is enough
+          const filtered = allResults.filter(r => newEnabled.includes(r.source));
+          renderResults(filtered);
+          emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+        }
       }
     });
 
